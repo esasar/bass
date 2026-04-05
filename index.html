@@ -1,12 +1,23 @@
-<!DOCTYPE html><html lang="en"><head>
-        <meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
         <title>BAss</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <link rel="stylesheet" href="/bass/styles-283b86d832b397a6.css">
-        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg">
-    
-<link rel="preload" href="/bass/bass-a56dd0ce3a44f87c_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/bass/bass-a56dd0ce3a44f87c.js"></head>
+        <link rel="stylesheet" href="/bass/styles-283b86d832b397a6.css" integrity="sha384-z0aVPEK44MNN3Y93rJ9O1DgyNnxyhN+e6Qstmlhfre+V385LCbV0XYDaUVavkXUY"/>
+        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg" integrity="sha384-SfyKRoaA7u4b5Z0QUTlpaImkVNlpnX5iVJX8P+KAxzvixya/CFGcI0aHQps59Ozx"/>
+    <link rel="modulepreload" href="/bass/bass-25691d6c2fb2d9b7.js" crossorigin="anonymous" integrity="sha384-V+lh2y9Uwc0K5YmWZ1O/wZFaLK1yqZMyU8oSg77k6cTdZgCYYemqPw1MzLFuvr+W"><link rel="preload" href="/bass/bass-25691d6c2fb2d9b7_bg.wasm" crossorigin="anonymous" integrity="sha384-lCg5XSl3+ERqY3Z3GmWLRzfEt4S1uZ7XUVz3ZYXWZSad4UL9RITm6h46zvuOrbPp" as="fetch" type="application/wasm"></head>
     <body>
-<script type="module">import init from '/bass/bass-a56dd0ce3a44f87c.js';init('/bass/bass-a56dd0ce3a44f87c_bg.wasm');</script></body></html>
+<script type="module">
+import init, * as bindings from '/bass/bass-25691d6c2fb2d9b7.js';
+const wasm = await init({ module_or_path: '/bass/bass-25691d6c2fb2d9b7_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
