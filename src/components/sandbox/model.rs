@@ -33,18 +33,30 @@ pub trait Renderable {
 impl Renderable for Entity {
     // TODO: split this func
     fn render(&self, ctx: &CanvasRenderingContext2d, scene: &Scene) {
+        let x = self.position.x - OBJECT_SIZE / 2.0;
+        let y = self.position.y - OBJECT_SIZE / 2.0;
+
+        let touched = Some(self.id) == scene.touched;
+        let selected = Some(self.id) == scene.selected;
+
+        if selected {
+            ctx.set_stroke_style_str("red");
+            ctx.set_line_width(2.0);
+            ctx.stroke_rect(x - 2.0, y - 2.0, OBJECT_SIZE + 4.0, OBJECT_SIZE + 4.0);
+        }
+
         match &self.kind {
             Kind::Target => {
                 // TODO: add colours to a config or css
-                let color = if Some(self.id) == scene.touched { "blue" } else { "red" };
+                let color = if touched { "red" } else { "blue" };
                 ctx.set_fill_style_str(color);
-                ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
+                ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
             }
             Kind::Observer { std } => {
                 // TODO: add colours to a config or css
-                let color = if Some(self.id) == scene.touched { "blue" } else { "green" };
+                let color = if touched{ "red" } else { "green" };
                 ctx.set_fill_style_str(color);
-                ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
+                ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
 
                 let targets = scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target));
                 for (_, t) in targets {
@@ -88,6 +100,7 @@ pub enum SceneAction {
     ClearAll,
     Touch(Option<usize>),
     Select(Option<usize>),
+    Move(usize, Position),
 }
 
 impl Reducible for Scene {
@@ -117,7 +130,17 @@ impl Reducible for Scene {
                 selected: id,
                 ..(*self).clone()
             }),
-            // TODO: move entity
+            SceneAction::Move(id, pos) => {
+                let mut entities = self.entities.clone();
+                if let Some(entity) = entities.get_mut(&id) {
+                    entity.position = pos;
+                }
+                Rc::new(Scene {
+                    entities,
+                    ..(*self).clone()
+                })
+            }
+            // TODO: remove single entity
         }
     }
 }

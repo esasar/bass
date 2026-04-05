@@ -139,6 +139,10 @@ pub fn sandbox() -> Html {
         Callback::from(move |e: MouseEvent| {
             if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                 let canvas_pos = client_to_canvas(&canvas, &Position { x: e.client_x() as f64, y: e.client_y() as f64 });
+                if let Some(id) = scene.selected {
+                    scene.dispatch(SceneAction::Move(id, canvas_pos));
+                    return;
+                }
                 let mut touched_id = None;
                 for (id, entity) in scene.entities.iter() {
                     if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
