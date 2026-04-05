@@ -1,6 +1,8 @@
+pub(crate)
+
 mod header;
 mod context_menu;
-mod sandbox;
+pub(crate) mod sandbox;
 mod slider;
 
 pub use header::Header;

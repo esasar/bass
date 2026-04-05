@@ -1,3 +1,5 @@
+pub(crate) 
+
 mod model;
 mod canvas;
 mod controls;

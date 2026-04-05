@@ -1,12 +1,19 @@
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent};
-use web_sys::js_sys::Intl::DisplayNamesType::Calendar;
 use web_sys::wasm_bindgen::JsCast;
-use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback};
+use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback, NodeRef, Properties, UseReducerHandle, UseStateHandle};
 use yew::{function_component, html, Html};
 use crate::components::context_menu::{ContextMenu, ContextMenuItem};
 use crate::components::sandbox::controls::Controls;
 use crate::components::sandbox::model::{Entity, Kind, Renderable, Scene, SceneAction, OBJECT_SIZE};
 use crate::components::sandbox::Position;
+use crate::sim::monte_carlo;
+
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub accuracies: UseStateHandle<Vec<f64>>,
+    pub runtimes: UseStateHandle<Vec<f64>>,
+}
+
 
 fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Position {
     let rect = canvas.get_bounding_client_rect();
@@ -20,7 +27,7 @@ fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Positi
 }
 
 #[function_component(Sandbox)]
-pub fn sandbox() -> Html {
+pub fn sandbox(props: &Props) -> Html {
     let std = use_state(|| 1.0f64);
     let on_std_change = Callback::from({
         let std = std.clone();
@@ -107,17 +114,43 @@ pub fn sandbox() -> Html {
         })
     };
 
-    use_effect_with((scene.clone(), canvas_ref.clone()), |(scene, canvas_ref)| {
-        if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
-            let ctx = canvas
-                .get_context("2d")
-                .unwrap()
-                .unwrap()
-                .dyn_into::<CanvasRenderingContext2d>()
-                .unwrap();
-            ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
-            for (_, entity) in scene.entities.iter() {
-                entity.render(&ctx, scene);
+    let accuracies = props.accuracies.clone();
+    let runtimes = props.runtimes.clone();
+
+    use_effect_with((scene.clone(), canvas_ref.clone(), iters.clone()), {
+        let accuracies = accuracies.clone();
+        let runtimes = runtimes.clone();
+        move |(scene, canvas_ref, iters): &(UseReducerHandle<Scene>, NodeRef, UseStateHandle<f64>)| {
+            if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
+                let ctx = canvas
+                    .get_context("2d")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<CanvasRenderingContext2d>()
+                    .unwrap();
+                ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
+                for (_, entity) in scene.entities.iter() {
+                    entity.render(&ctx, scene);
+                }
+            }
+
+            let targets: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Target)).cloned().collect();
+            let observers: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Observer { std: _ })).cloned().collect();
+
+            if !targets.is_empty() && !observers.is_empty() {
+                let (acc, rt) = monte_carlo(&observers, &targets, **iters as usize);
+                let mut new_accuracies = (*accuracies).clone();
+                let mut new_runtimes = (*runtimes).clone();
+                new_accuracies.push(acc);
+                new_runtimes.push(rt);
+                if new_accuracies.len() > 50 {
+                    new_accuracies.remove(0);
+                }
+                if new_runtimes.len() > 50 {
+                    new_runtimes.remove(0);
+                }
+                accuracies.set(new_accuracies);
+                runtimes.set(new_runtimes);
             }
         }
     });
