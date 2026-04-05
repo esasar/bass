@@ -195,6 +195,17 @@ pub fn sandbox(props: &Props) -> Html {
         })
     };
 
+    let on_remove_target = {
+        let scene = scene.clone();
+        let context_menu_pos = context_menu_pos.clone();
+        Callback::from(move |_: MouseEvent| {
+            if let Some(id) = scene.touched {
+                scene.dispatch(SceneAction::Remove(id));
+            }
+            context_menu_pos.set(None);
+        })
+    };
+
     html! {
         <div class="sandbox">
             <Controls
@@ -216,8 +227,12 @@ pub fn sandbox(props: &Props) -> Html {
             </div>
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
-                    <ContextMenuItem label={"Add target"} on_click={on_add_target}/>
-                    <ContextMenuItem label={"Add observer"} on_click={on_add_observer}/>
+                    if let Some(id) = scene.touched {
+                        <ContextMenuItem label={"Remove target"} on_click={on_remove_target}/>
+                    } else {
+                        <ContextMenuItem label={"Add target"} on_click={on_add_target}/>
+                        <ContextMenuItem label={"Add observer"} on_click={on_add_observer}/>
+                    }
                     <ContextMenuItem label={"Clear all"} on_click={on_clear_all}/>
                 </ContextMenu>
             }

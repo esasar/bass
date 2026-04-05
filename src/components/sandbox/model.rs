@@ -140,7 +140,6 @@ impl Reducible for Scene {
                     ..(*self).clone()
                 })
             }
-            // TODO: remove single entity
         }
     }
 }
