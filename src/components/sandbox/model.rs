@@ -148,3 +148,4 @@ pub const FAR: f64 = 10000.0;
 pub const TARGET_COLOR: &str = "#e05c5c";
 pub const OBSERVER_COLOR: &str = "#7eb8c9";
 pub const BEAM_COLOR: &str = "rgba(255, 200, 80, 0.15)";
+pub const TOUCH_HIT_SIZE: f64 = 48.0;

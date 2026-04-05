@@ -4,7 +4,7 @@ use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback, NodeR
 use yew::{function_component, html, Html};
 use crate::components::context_menu::{ContextMenu, ContextMenuItem};
 use crate::components::sandbox::controls::Controls;
-use crate::components::sandbox::model::{Entity, Kind, Renderable, Scene, SceneAction, OBJECT_SIZE};
+use crate::components::sandbox::model::{Entity, Kind, Renderable, Scene, SceneAction, OBJECT_SIZE, TOUCH_HIT_SIZE};
 use crate::components::sandbox::Position;
 use crate::sim::monte_carlo;
 
@@ -214,7 +214,6 @@ pub fn sandbox(props: &Props) -> Html {
         let scene = scene.clone();
         let canvas_ref = canvas_ref.clone();
         Callback::from(move |e: TouchEvent| {
-            e.prevent_default();
             if let Some(touch) = e.touches().get(0) {
                 if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                     let canvas_pos = client_to_canvas(&canvas, &Position { x: touch.client_x() as f64, y: touch.client_y() as f64 });
@@ -224,7 +223,7 @@ pub fn sandbox(props: &Props) -> Html {
                     }
                     let mut touched_id = None;
                     for (id, entity) in scene.entities.iter() {
-                        if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
+                        if (canvas_pos.x - entity.position.x).abs() < TOUCH_HIT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < TOUCH_HIT_SIZE / 2.0 {
                             touched_id = Some(*id);
                             break;
                         }
