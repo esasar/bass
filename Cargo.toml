@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 yew = { version = "0.23.0", features = ["csr"] }
-web-sys = { version = "0.3.94", features = ["Element", "HtmlCanvasElement", "CanvasRenderingContext2d", "DomRect"] }
+web-sys = { version = "0.3.94", features = ["Element", "HtmlCanvasElement", "CanvasRenderingContext2d", "DomRect", "TouchEvent", "TouchList", "Touch"] }
 rand_distr = "0.6.0"
 rand = "0.10.0"
 web-time = "1.1.0"
