@@ -5,3 +5,4 @@ mod slider;
 
 pub use header::Header;
 pub use sandbox::Sandbox;
+pub use slider::Slider;
