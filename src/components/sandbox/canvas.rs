@@ -227,7 +227,7 @@ pub fn sandbox(props: &Props) -> Html {
             </div>
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
-                    if let Some(id) = scene.touched {
+                    if let Some(_) = scene.touched {
                         <ContextMenuItem label={"Remove target"} on_click={on_remove_target}/>
                     } else {
                         <ContextMenuItem label={"Add target"} on_click={on_add_target}/>

@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 use web_sys::js_sys::Math::atan2;
-use web_sys::{console, CanvasRenderingContext2d};
+use web_sys::{CanvasRenderingContext2d};
 use yew::Reducible;
-use crate::components::sandbox::model::Kind::Observer;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Position {

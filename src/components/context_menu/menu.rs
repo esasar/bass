@@ -1,4 +1,4 @@
-use yew::{function_component, html, props, Children, Html, Properties};
+use yew::{function_component, html, Children, Html, Properties};
 use crate::components::sandbox::Position;
 
 #[derive(Properties, PartialEq)]
