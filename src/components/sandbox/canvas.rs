@@ -1,10 +1,10 @@
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent};
 use web_sys::wasm_bindgen::JsCast;
-use yew::{use_effect_with, use_node_ref, use_state, Callback};
+use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback};
 use yew::{function_component, html, Html};
 use crate::components::context_menu::{ContextMenu, ContextMenuItem};
 use crate::components::sandbox::controls::Controls;
-use crate::components::sandbox::model::{Entity, Kind, RenderState, Renderable, SceneState};
+use crate::components::sandbox::model::{Entity, Kind, RenderState, Renderable, Scene, SceneAction};
 use crate::components::sandbox::Position;
 
 fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Position {
@@ -26,6 +26,7 @@ pub fn sandbox() -> Html {
         move |val: f64| std.set(val)
     });
 
+    // TODO: iterations f64 -> i64
     let iters = use_state(|| 10.0f64);
     let on_iters_change = Callback::from({
         let iters = iters.clone();
@@ -43,7 +44,7 @@ pub fn sandbox() -> Html {
         })
     };
 
-    let scene = use_state(SceneState::default);
+    let scene = use_reducer(Scene::default);
     // TODO: running id -> something else?
     let id = use_state(|| 0usize);
 
@@ -58,14 +59,13 @@ pub fn sandbox() -> Html {
                 canvas_ref.cast::<HtmlCanvasElement>()
             ) {
                 let canvas_pos = client_to_canvas(&canvas, &client_pos);
-                let mut new_scene = (*scene).clone();
                 let current_id = *id;
-                new_scene.entities.insert(current_id, Entity {
+                let new_entity = Entity {
                     id: current_id,
                     position: canvas_pos,
                     kind: Kind::Target,
-                });
-                scene.set(new_scene);
+                };
+                scene.dispatch(SceneAction::Add(current_id, new_entity));
                 id.set(current_id + 1);
                 context_menu_pos.set(None);
             }
@@ -84,14 +84,13 @@ pub fn sandbox() -> Html {
                 canvas_ref.cast::<HtmlCanvasElement>()
             ) {
                 let canvas_pos = client_to_canvas(&canvas, &client_pos);
-                let mut new_scene = (*scene).clone();
                 let current_id = *id;
-                new_scene.entities.insert(current_id, Entity {
+                let new_entity = Entity {
                     id: current_id,
                     position: canvas_pos,
                     kind: Kind::Observer { std: *std },
-                });
-                scene.set(new_scene);
+                };
+                scene.dispatch(SceneAction::Add(current_id, new_entity));
                 id.set(current_id + 1);
                 context_menu_pos.set(None);
             }
@@ -102,7 +101,7 @@ pub fn sandbox() -> Html {
         let scene = scene.clone();
         let context_menu_pos = context_menu_pos.clone();
         Callback::from(move |_: MouseEvent| {
-            scene.set(SceneState::default());
+            scene.dispatch(SceneAction::ClearAll);
             context_menu_pos.set(None);
         })
     };
@@ -117,10 +116,17 @@ pub fn sandbox() -> Html {
                 .unwrap();
             ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
             for (_, entity) in scene.entities.iter() {
-                entity.render(&ctx, &RenderState::default(), &SceneState::default());
+                entity.render(&ctx, &RenderState::default(), &Scene::default());
             }
         }
     });
+
+    let on_mouse_down = {
+        let context_menu_pos = context_menu_pos.clone();
+        Callback::from(move |_: MouseEvent| {
+            context_menu_pos.set(None);
+        })
+    };
 
     html! {
         <>
@@ -132,6 +138,7 @@ pub fn sandbox() -> Html {
             />
             <canvas
                 ref={canvas_ref}
+                onmousedown={on_mouse_down}
                 oncontextmenu={on_canvas_context_menu}
             />
             if let Some(pos) = *context_menu_pos {

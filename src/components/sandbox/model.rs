@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 use web_sys::js_sys::Math::atan2;
 use web_sys::CanvasRenderingContext2d;
+use yew::Reducible;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Position {
@@ -35,26 +37,18 @@ pub struct EntityView<'a> {
 }
 
 pub trait Renderable {
-    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &SceneState);
+    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &Scene);
 }
 
 impl Renderable for Entity {
-    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &SceneState) {
-        let color = if render_state.selected {
-            "green"
-        } else if render_state.touched {
-            "orange"
-        } else {
-            "black"
-        };
-
+    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &Scene) {
         match &self.kind {
             Kind::Target => {
-                ctx.set_fill_style_str(color);
+                ctx.set_fill_style_str("red");
                 ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
             }
             Kind::Observer { std } => {
-                ctx.set_fill_style_str(color);
+                ctx.set_fill_style_str("green");
                 ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
 
                 let targets = scene_state.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target));
@@ -63,8 +57,8 @@ impl Renderable for Entity {
                     let dy = t.position.y - self.position.y;
                     let az = atan2(dy, dx);
 
-                    let left = az - std;
-                    let right = az + std;
+                    let left = az - std.to_radians();
+                    let right = az + std.to_radians();
 
                     let left_x = self.position.x + left.cos() * FAR;
                     let left_y = self.position.y + left.sin() * FAR;
@@ -77,7 +71,7 @@ impl Renderable for Entity {
                     ctx.line_to(left_x, left_y);
                     ctx.line_to(right_x, right_y);
                     ctx.close_path();
-                    ctx.set_fill_style_str("rgba(255, 0, 0, 0.1)");
+                    ctx.set_fill_style_str("red");
                     ctx.fill();
                 }
             }
@@ -86,9 +80,38 @@ impl Renderable for Entity {
 }
 
 #[derive(Default, Clone, PartialEq)]
-pub struct SceneState {
+pub struct Scene {
     pub entities: HashMap<usize, Entity>,
     pub render_states: HashMap<usize, RenderState>,
+}
+
+pub enum SceneAction {
+    Add(usize, Entity),
+    Remove(usize),
+    ClearAll,
+}
+
+impl Reducible for Scene {
+    type Action = SceneAction;
+
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        match action {
+            SceneAction::Add(id, entity) => {
+                let mut entities = self.entities.clone();
+                entities.insert(id, entity);
+                Rc::new(Scene { entities, ..(*self).clone() })
+            }
+            SceneAction::Remove(id) => {
+                let mut entities = self.entities.clone();
+                entities.remove(&id);
+                Rc::new(Scene { entities, ..(*self).clone() })
+            }
+            SceneAction::ClearAll => Rc::new(Scene {
+                entities: HashMap::new(),
+                ..(*self).clone()
+            })
+        }
+    }
 }
 
 pub const OBJECT_SIZE: f64 = 10.0;
