@@ -1,6 +1,20 @@
-use yew::{use_state, Callback};
+use web_sys::{HtmlCanvasElement, MouseEvent};
+use yew::{use_node_ref, use_state, Callback};
 use yew::{function_component, html, Html};
+use crate::components::context_menu::{ContextMenu, ContextMenuItem};
 use crate::components::sandbox::controls::Controls;
+use crate::components::sandbox::Position;
+
+fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Position {
+    let rect = canvas.get_bounding_client_rect();
+    let scale_x = canvas.width() as f64 / rect.width();
+    let scale_y = canvas.height() as f64 / rect.height();
+
+    Position {
+        x: (client_pos.x - rect.left()) * scale_x,
+        y: (client_pos.y - rect.top()) * scale_y,
+    }
+}
 
 #[function_component(Sandbox)]
 pub fn sandbox() -> Html {
@@ -16,6 +30,17 @@ pub fn sandbox() -> Html {
         move |val: f64| iters.set(val)
     });
 
+    let canvas_ref = use_node_ref();
+
+    let context_menu_pos = use_state(|| Option::<Position>::None);
+    let on_canvas_context_menu = {
+        let context_menu_pos = context_menu_pos.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            context_menu_pos.set(Some(Position{ x: e.client_x() as f64, y: e.client_y() as f64 }))
+        })
+    };
+
     html! {
         <>
             <Controls
@@ -24,8 +49,15 @@ pub fn sandbox() -> Html {
                 iters={*iters}
                 on_iters_change={on_iters_change}
             />
-            <canvas>
-            </canvas>
+            <canvas
+                ref={canvas_ref}
+                oncontextmenu={on_canvas_context_menu}
+            />
+            if let Some(pos) = *context_menu_pos {
+                <ContextMenu pos={pos}>
+                    <ContextMenuItem label={"Clear all"} on_click={Callback::from(|_| ())}/>
+                </ContextMenu>
+            }
         </>
     }
 }
