@@ -176,8 +176,8 @@ pub fn sandbox(props: &Props) -> Html {
                 if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                     let canvas_pos = client_to_canvas(&canvas, &Position { x: touch.client_x() as f64, y: touch.client_y() as f64 });
                     for (id, entity) in scene.entities.iter() {
-                        if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0
-                            && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
+                        if (canvas_pos.x - entity.position.x).abs() < TOUCH_HIT_SIZE / 2.0
+                            && (canvas_pos.y - entity.position.y).abs() < TOUCH_HIT_SIZE / 2.0 {
                             scene.dispatch(SceneAction::Select(Some(*id)));
                             break;
                         }
