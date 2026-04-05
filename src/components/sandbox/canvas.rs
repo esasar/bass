@@ -44,6 +44,7 @@ pub fn sandbox() -> Html {
     };
 
     let scene = use_state(SceneState::default);
+    // TODO: running id -> something else?
     let id = use_state(|| 0usize);
 
     let on_add_target = {
@@ -68,6 +69,41 @@ pub fn sandbox() -> Html {
                 id.set(current_id + 1);
                 context_menu_pos.set(None);
             }
+        })
+    };
+
+    let on_add_observer = {
+        let scene = scene.clone();
+        let canvas_ref = canvas_ref.clone();
+        let context_menu_pos = context_menu_pos.clone();
+        let id = id.clone();
+        let std = std.clone();
+        Callback::from(move |_: MouseEvent| {
+            if let (Some(client_pos), Some(canvas)) = (
+                *context_menu_pos,
+                canvas_ref.cast::<HtmlCanvasElement>()
+            ) {
+                let canvas_pos = client_to_canvas(&canvas, &client_pos);
+                let mut new_scene = (*scene).clone();
+                let current_id = *id;
+                new_scene.entities.insert(current_id, Entity {
+                    id: current_id,
+                    position: canvas_pos,
+                    kind: Kind::Observer { std: *std },
+                });
+                scene.set(new_scene);
+                id.set(current_id + 1);
+                context_menu_pos.set(None);
+            }
+        })
+    };
+
+    let on_clear_all = {
+        let scene = scene.clone();
+        let context_menu_pos = context_menu_pos.clone();
+        Callback::from(move |_: MouseEvent| {
+            scene.set(SceneState::default());
+            context_menu_pos.set(None);
         })
     };
 
@@ -100,8 +136,9 @@ pub fn sandbox() -> Html {
             />
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
-                    <ContextMenuItem label={"Clear all"} on_click={Callback::from(|_| ())}/>
+                    <ContextMenuItem label={"Clear all"} on_click={on_clear_all}/>
                     <ContextMenuItem label={"Add target"} on_click={on_add_target}/>
+                    <ContextMenuItem label={"Add observer"} on_click={on_add_observer}/>
                 </ContextMenu>
             }
         </>
