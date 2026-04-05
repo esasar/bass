@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 use web_sys::js_sys::Math::atan2;
-use web_sys::CanvasRenderingContext2d;
+use web_sys::{console, CanvasRenderingContext2d};
 use yew::Reducible;
+use crate::components::sandbox::model::Kind::Observer;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Position {
@@ -25,33 +26,27 @@ pub struct Entity {
     pub kind: Kind,
 }
 
-#[derive(Clone, PartialEq, Default)]
-pub struct RenderState {
-    pub selected: bool,
-    pub touched: bool,
-}
-
-pub struct EntityView<'a> {
-    pub entity: &'a Entity,
-    pub render_state: &'a RenderState,
-}
-
 pub trait Renderable {
-    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &Scene);
+    fn render(&self, ctx: &CanvasRenderingContext2d, scene_state: &Scene);
 }
 
 impl Renderable for Entity {
-    fn render(&self, ctx: &CanvasRenderingContext2d, render_state: &RenderState, scene_state: &Scene) {
+    // TODO: split this func
+    fn render(&self, ctx: &CanvasRenderingContext2d, scene: &Scene) {
         match &self.kind {
             Kind::Target => {
-                ctx.set_fill_style_str("red");
+                // TODO: add colours to a config or css
+                let color = if Some(self.id) == scene.touched { "blue" } else { "red" };
+                ctx.set_fill_style_str(color);
                 ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
             }
             Kind::Observer { std } => {
-                ctx.set_fill_style_str("green");
+                // TODO: add colours to a config or css
+                let color = if Some(self.id) == scene.touched { "blue" } else { "green" };
+                ctx.set_fill_style_str(color);
                 ctx.fill_rect(self.position.x - OBJECT_SIZE / 2.0, self.position.y - OBJECT_SIZE / 2.0, OBJECT_SIZE, OBJECT_SIZE);
 
-                let targets = scene_state.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target));
+                let targets = scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target));
                 for (_, t) in targets {
                     let dx = t.position.x - self.position.x;
                     let dy = t.position.y - self.position.y;
@@ -71,7 +66,8 @@ impl Renderable for Entity {
                     ctx.line_to(left_x, left_y);
                     ctx.line_to(right_x, right_y);
                     ctx.close_path();
-                    ctx.set_fill_style_str("red");
+                    // TODO: add colours to a config or css
+                    ctx.set_fill_style_str("rgba(255, 0, 0, 0.1)");
                     ctx.fill();
                 }
             }
@@ -82,13 +78,16 @@ impl Renderable for Entity {
 #[derive(Default, Clone, PartialEq)]
 pub struct Scene {
     pub entities: HashMap<usize, Entity>,
-    pub render_states: HashMap<usize, RenderState>,
+    pub touched: Option<usize>,
+    pub selected: Option<usize>,
 }
 
 pub enum SceneAction {
     Add(usize, Entity),
     Remove(usize),
     ClearAll,
+    Touch(Option<usize>),
+    Select(Option<usize>),
 }
 
 impl Reducible for Scene {
@@ -109,7 +108,16 @@ impl Reducible for Scene {
             SceneAction::ClearAll => Rc::new(Scene {
                 entities: HashMap::new(),
                 ..(*self).clone()
-            })
+            }),
+            SceneAction::Touch(id) => Rc::new(Scene {
+                touched: id,
+                ..(*self).clone()
+            }),
+            SceneAction::Select(id) => Rc::new(Scene {
+                selected: id,
+                ..(*self).clone()
+            }),
+            // TODO: move entity
         }
     }
 }

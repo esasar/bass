@@ -1,10 +1,11 @@
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent};
+use web_sys::js_sys::Intl::DisplayNamesType::Calendar;
 use web_sys::wasm_bindgen::JsCast;
 use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback};
 use yew::{function_component, html, Html};
 use crate::components::context_menu::{ContextMenu, ContextMenuItem};
 use crate::components::sandbox::controls::Controls;
-use crate::components::sandbox::model::{Entity, Kind, RenderState, Renderable, Scene, SceneAction};
+use crate::components::sandbox::model::{Entity, Kind, Renderable, Scene, SceneAction, OBJECT_SIZE};
 use crate::components::sandbox::Position;
 
 fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Position {
@@ -116,15 +117,44 @@ pub fn sandbox() -> Html {
                 .unwrap();
             ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
             for (_, entity) in scene.entities.iter() {
-                entity.render(&ctx, &RenderState::default(), &Scene::default());
+                entity.render(&ctx, scene);
             }
         }
     });
 
     let on_mouse_down = {
+        let scene = scene.clone();
         let context_menu_pos = context_menu_pos.clone();
         Callback::from(move |_: MouseEvent| {
+            if let Some(id) = scene.touched {
+                scene.dispatch(SceneAction::Select(Some(id)));
+            }
             context_menu_pos.set(None);
+        })
+    };
+
+    let on_mouse_move = {
+        let scene = scene.clone();
+        let canvas_ref = canvas_ref.clone();
+        Callback::from(move |e: MouseEvent| {
+            if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
+                let canvas_pos = client_to_canvas(&canvas, &Position { x: e.client_x() as f64, y: e.client_y() as f64 });
+                let mut touched_id = None;
+                for (id, entity) in scene.entities.iter() {
+                    if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
+                        touched_id = Some(*id);
+                        break;
+                    }
+                }
+                scene.dispatch(SceneAction::Touch(touched_id));
+            }
+        })
+    };
+
+    let on_mouse_up = {
+        let scene = scene.clone();
+        Callback::from(move |_: MouseEvent| {
+            scene.dispatch(SceneAction::Select(None));
         })
     };
 
@@ -139,6 +169,8 @@ pub fn sandbox() -> Html {
             <canvas
                 ref={canvas_ref}
                 onmousedown={on_mouse_down}
+                onmouseup={on_mouse_up}
+                onmousemove={on_mouse_move}
                 oncontextmenu={on_canvas_context_menu}
             />
             if let Some(pos) = *context_menu_pos {
