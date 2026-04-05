@@ -14,9 +14,9 @@ pub fn app() -> Html {
             <Header title={"BAss"}/>
             <main>
                 <section>
-                    <Sandbox accuracies={accuracies} runtimes={runtimes}/>
+                    <Sandbox accuracies={accuracies.clone()} runtimes={runtimes}/>
                 </section>
-                <aside>{"Aside content"}</aside>
+                <aside>{accuracies.last().map(|v| format!("{:.3}", v)).unwrap_or_default()}</aside>
             </main>
             <footer>{"Footer"}</footer>
         </>

@@ -51,8 +51,8 @@ impl Simulation {
     }
 
     pub fn predicted_bearing(observer: &Entity, target: &Entity) -> f64 {
-        let dy = target.position.y - observer.position.y;
         let dx = target.position.x - observer.position.x;
+        let dy = target.position.y - observer.position.y;
 
         dy.atan2(dx)
     }
@@ -65,7 +65,7 @@ impl Simulation {
                     Kind::Target => panic!("Observer was a target"),
                 };
                 let pred = Self::predicted_bearing(observer, target);
-                let noise = Normal::new(0.0, std).unwrap().sample(&mut rng());
+                let noise = Normal::new(0.0, std.to_radians()).unwrap().sample(&mut rng());
                 pred + noise
             }).collect::<Vec<f64>>()
         }).collect::<Vec<Vec<f64>>>()
@@ -87,7 +87,7 @@ impl Simulation {
                     ll_mat[i][j] *= normal_pdf(
                         wrap_angle(measurement - prediction),
                         0.0,
-                        std
+                        std.to_radians()
                     );
                 }
             }
