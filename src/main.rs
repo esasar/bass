@@ -2,7 +2,7 @@ mod components;
 mod sim;
 
 use yew::{function_component, html, use_state, Html};
-use crate::components::{Header, Sandbox};
+use crate::components::{Footer, Header, Sandbox};
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -14,11 +14,16 @@ pub fn app() -> Html {
             <Header title={"BAss"}/>
             <main>
                 <section>
-                    <Sandbox accuracies={accuracies.clone()} runtimes={runtimes}/>
+                    <Sandbox accuracies={accuracies.clone()} runtimes={runtimes.clone()}/>
                 </section>
-                <aside>{accuracies.last().map(|v| format!("{:.3}", v)).unwrap_or_default()}</aside>
+                <aside>
+                    
+                </aside>
             </main>
-            <footer>{"Footer"}</footer>
+            <Footer
+                accuracy={accuracies.last().copied().unwrap_or(0.0)}
+                runtime={runtimes.last().copied().unwrap_or(0.0)}
+            />
         </>
     }
 }

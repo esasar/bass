@@ -31,9 +31,9 @@ fn input_callback<T: FromStr + 'static>(on_change: Callback<T>) -> Callback<Inpu
 pub fn controls(props: &Props) -> Html {
     let on_std_input = input_callback(props.on_std_change.clone());
     let on_iters_input = input_callback(props.on_iters_change.clone());
-    
+
     html! {
-        <div>
+        <div class="controls">
             <Slider
                 label={"Std"}
                 value={props.std}

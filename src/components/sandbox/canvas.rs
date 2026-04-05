@@ -196,27 +196,31 @@ pub fn sandbox(props: &Props) -> Html {
     };
 
     html! {
-        <>
+        <div class="sandbox">
             <Controls
                 std={*std}
                 on_std_change={on_std_change}
                 iters={*iters}
                 on_iters_change={on_iters_change}
             />
-            <canvas
-                ref={canvas_ref}
-                onmousedown={on_mouse_down}
-                onmouseup={on_mouse_up}
-                onmousemove={on_mouse_move}
-                oncontextmenu={on_canvas_context_menu}
-            />
+            <div class="canvas-wrapper">
+                <canvas
+                    ref={canvas_ref}
+                    width={800}
+                    height={600}
+                    onmousedown={on_mouse_down}
+                    onmouseup={on_mouse_up}
+                    onmousemove={on_mouse_move}
+                    oncontextmenu={on_canvas_context_menu}
+                />
+            </div>
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
-                    <ContextMenuItem label={"Clear all"} on_click={on_clear_all}/>
                     <ContextMenuItem label={"Add target"} on_click={on_add_target}/>
                     <ContextMenuItem label={"Add observer"} on_click={on_add_observer}/>
+                    <ContextMenuItem label={"Clear all"} on_click={on_clear_all}/>
                 </ContextMenu>
             }
-        </>
+        </div>
     }
 }

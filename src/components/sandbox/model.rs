@@ -48,13 +48,13 @@ impl Renderable for Entity {
         match &self.kind {
             Kind::Target => {
                 // TODO: add colours to a config or css
-                let color = if touched { "red" } else { "blue" };
+                let color = if touched { "red" } else { TARGET_COLOR };
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
             }
             Kind::Observer { std } => {
                 // TODO: add colours to a config or css
-                let color = if touched{ "red" } else { "green" };
+                let color = if touched{ "red" } else { OBSERVER_COLOR };
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
 
@@ -79,7 +79,7 @@ impl Renderable for Entity {
                     ctx.line_to(right_x, right_y);
                     ctx.close_path();
                     // TODO: add colours to a config or css
-                    ctx.set_fill_style_str("rgba(255, 0, 0, 0.1)");
+                    ctx.set_fill_style_str(BEAM_COLOR);
                     ctx.fill();
                 }
             }
@@ -147,3 +147,6 @@ impl Reducible for Scene {
 
 pub const OBJECT_SIZE: f64 = 10.0;
 pub const FAR: f64 = 10000.0;
+pub const TARGET_COLOR: &str = "#e05c5c";
+pub const OBSERVER_COLOR: &str = "#7eb8c9";
+pub const BEAM_COLOR: &str = "rgba(255, 200, 80, 0.15)";

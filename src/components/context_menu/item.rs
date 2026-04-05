@@ -9,7 +9,7 @@ pub struct Props {
 #[function_component(ContextMenuItem)]
 pub fn context_menu_item(props: &Props) -> Html {
     html! {
-        <menuitem onclick={&props.on_click}>
+        <menuitem class="context-menu-item" onclick={&props.on_click}>
             {&props.label}
         </menuitem>
     }

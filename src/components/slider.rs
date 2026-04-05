@@ -21,10 +21,10 @@ pub fn slider(props: &Props) -> Html {
     let value_width = format!("width: {}ch", props.max.to_string().len() + 2);
 
     html! {
-        <div>
+        <div class="slider">
             <label>
                 {&props.label}{" ("}
-                <span style={value_width}>
+                <span class="slider-value" style={value_width}>
                     {format!("{:.1}", props.value)}
                 </span>{&props.unit}{")"}
             </label>
