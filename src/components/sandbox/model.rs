@@ -36,7 +36,7 @@ impl Renderable for Entity {
         let y = self.position.y - OBJECT_SIZE / 2.0;
 
         let touched = Some(self.id) == scene.touched;
-        let selected = Some(self.id) == scene.selected;
+        let selected = scene.selected.contains(&self.id);
 
         if selected {
             ctx.set_stroke_style_str("red");
@@ -90,8 +90,9 @@ impl Renderable for Entity {
 pub struct Scene {
     pub entities: HashMap<usize, Entity>,
     pub touched: Option<usize>,
-    pub selected: Option<usize>,
     pub dragging: Option<usize>,
+    pub selection_box: Option<(Position, Position)>,
+    pub selected: Vec<usize>,
 }
 
 pub enum SceneAction {
@@ -99,11 +100,23 @@ pub enum SceneAction {
     Remove(usize),
     ClearAll,
     Touch(Option<usize>),
-    Select(Option<usize>),
+    Select(Vec<usize>),
     Move(usize, Position),
     AdjustStd(usize, f64),
     StartDrag(usize),
     EndDrag,
+    StartSelectionBox(Position),
+    UpdateSelectionBox(Position),
+    EndSelectionBox,
+}
+
+fn in_selection(pos: Position, a: Position, b: Position) -> bool {
+    let min_x = a.x.min(b.x);
+    let max_x = a.x.max(b.x);
+    let min_y = a.y.min(b.y);
+    let max_y = a.y.max(b.y);
+
+    pos.x >= min_x && pos.x <= max_x && pos.y >= min_y && pos.y <= max_y
 }
 
 impl Reducible for Scene {
@@ -129,8 +142,8 @@ impl Reducible for Scene {
                 touched: id,
                 ..(*self).clone()
             }),
-            SceneAction::Select(id) => Rc::new(Scene {
-                selected: id,
+            SceneAction::Select(ids) => Rc::new(Scene {
+                selected: ids,
                 ..(*self).clone()
             }),
             SceneAction::Move(id, pos) => {
@@ -163,6 +176,29 @@ impl Reducible for Scene {
                 dragging: None,
                 ..(*self).clone()
             }),
+            SceneAction::StartSelectionBox(pos) => Rc::new(Scene {
+               selection_box: Some((pos, pos)),
+                ..(*self).clone()
+            }),
+            SceneAction::UpdateSelectionBox(pos) => {
+                if let Some((anchor, _)) = self.selection_box {
+                    let selected = self.entities.values()
+                        .filter(|e| in_selection(e.position, anchor, pos))
+                        .map(|e| e.id)
+                        .collect();
+                    Rc::new(Scene {
+                        selection_box: Some((anchor, pos)),
+                        selected,
+                        ..(*self).clone()
+                    })
+                } else {
+                    Rc::new((*self).clone())
+                }
+            },
+            SceneAction::EndSelectionBox => Rc::new(Scene {
+                selection_box: None,
+                ..(*self).clone()
+            })
         }
     }
 }

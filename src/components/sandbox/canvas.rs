@@ -39,8 +39,8 @@ pub fn sandbox(props: &Props) -> Html {
     use_effect_with(*std, {
         let scene = scene.clone();
         move |std: &f64| {
-            if let Some(id) = scene.selected {
-                scene.dispatch(SceneAction::AdjustStd(id, *std));
+            for id in &scene.selected {
+                scene.dispatch(SceneAction::AdjustStd(*id, *std));
             }
         }
     });
@@ -142,6 +142,17 @@ pub fn sandbox(props: &Props) -> Html {
                 for (_, entity) in scene.entities.iter() {
                     entity.render(&ctx, scene);
                 }
+
+                if let Some((anchor, current)) = scene.selection_box {
+                    let x = anchor.x.min(current.x);
+                    let y = anchor.y.min(current.y);
+                    let w = (current.x - anchor.x).abs();
+                    let h = (current.y - anchor.y).abs();
+                    ctx.set_stroke_style_str("rgba(100, 150, 255, 0.8)");
+                    ctx.set_fill_style_str("rgba(100, 150, 255, 0.1)");
+                    ctx.fill_rect(x, y, w, h);
+                    ctx.stroke_rect(x, y, w, h);
+                }
             }
 
             let targets: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Target)).cloned().collect();
@@ -168,12 +179,18 @@ pub fn sandbox(props: &Props) -> Html {
     let on_mouse_down = {
         let scene = scene.clone();
         let context_menu_pos = context_menu_pos.clone();
-        Callback::from(move |_: MouseEvent| {
+        let canvas_ref = canvas_ref.clone();
+        Callback::from(move |e: MouseEvent| {
+            scene.dispatch(SceneAction::EndSelectionBox);
             if let Some(id) = scene.touched {
                 scene.dispatch(SceneAction::StartDrag(id));
-                scene.dispatch(SceneAction::Select(Some(id)));
+                scene.dispatch(SceneAction::Select(vec![id]));
             } else {
-                scene.dispatch(SceneAction::Select(None));
+                scene.dispatch(SceneAction::Select(Vec::new()));
+                if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
+                    let canvas_pos = client_to_canvas(&canvas, &Position { x: e.client_x() as f64, y: e.client_y() as f64 });
+                    scene.dispatch(SceneAction::StartSelectionBox(canvas_pos));
+                }
             }
             context_menu_pos.set(None);
         })
@@ -191,7 +208,7 @@ pub fn sandbox(props: &Props) -> Html {
                     for (id, entity) in scene.entities.iter() {
                         if (canvas_pos.x - entity.position.x).abs() < TOUCH_HIT_SIZE / 2.0
                             && (canvas_pos.y - entity.position.y).abs() < TOUCH_HIT_SIZE / 2.0 {
-                            scene.dispatch(SceneAction::Select(Some(*id)));
+                            scene.dispatch(SceneAction::Select(vec![*id]));
                             break;
                         }
                     }
@@ -214,6 +231,12 @@ pub fn sandbox(props: &Props) -> Html {
                     scene.dispatch(SceneAction::Move(id, canvas_pos));
                     return;
                 }
+
+                if scene.selection_box.is_some() {
+                    scene.dispatch(SceneAction::UpdateSelectionBox(canvas_pos));
+                    return;
+                }
+
                 let mut touched_id = None;
                 for (id, entity) in scene.entities.iter() {
                     if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
@@ -234,9 +257,11 @@ pub fn sandbox(props: &Props) -> Html {
             if let Some(touch) = e.touches().get(0) {
                 if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                     let canvas_pos = client_to_canvas(&canvas, &Position { x: touch.client_x() as f64, y: touch.client_y() as f64 });
-                    if let Some(id) = scene.selected {
-                        scene.dispatch(SceneAction::Move(id, canvas_pos));
-                        return;
+                    if scene.selected.len() == 1 {
+                        if let Some(id) = scene.selected.first() {
+                            scene.dispatch(SceneAction::Move(*id, canvas_pos));
+                            return;
+                        }
                     }
                     let mut touched_id = None;
                     for (id, entity) in scene.entities.iter() {
@@ -255,13 +280,14 @@ pub fn sandbox(props: &Props) -> Html {
         let scene = scene.clone();
         Callback::from(move |_: MouseEvent| {
             scene.dispatch(SceneAction::EndDrag);
+            scene.dispatch(SceneAction::EndSelectionBox);
         })
     };
 
     let on_touch_end = {
         let scene = scene.clone();
         Callback::from(move |_: TouchEvent| {
-            scene.dispatch(SceneAction::Select(None));
+            scene.dispatch(SceneAction::Select(Vec::new()));
         })
     };
 
