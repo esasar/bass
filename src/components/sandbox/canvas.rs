@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent, TouchEvent};
 use web_sys::wasm_bindgen::JsCast;
 use yew::{use_effect_with, use_node_ref, use_reducer, use_state, Callback, NodeRef, Properties, UseReducerHandle, UseStateHandle};
@@ -28,6 +29,7 @@ fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Positi
 
 #[function_component(Sandbox)]
 pub fn sandbox(props: &Props) -> Html {
+    // TODO: maybe add some custom hooks or something to break this mess
     let scene = use_reducer(Scene::default);
 
     let std = use_state(|| 1.0f64);
@@ -81,7 +83,7 @@ pub fn sandbox(props: &Props) -> Html {
                 let new_entity = Entity {
                     id: current_id,
                     position: canvas_pos,
-                    kind: Kind::Target,
+                    kind: Kind::Target { accuracy: 0.0 },
                 };
                 scene.dispatch(SceneAction::Add(current_id, new_entity));
                 id.set(current_id + 1);
@@ -127,10 +129,9 @@ pub fn sandbox(props: &Props) -> Html {
     let accuracies = props.accuracies.clone();
     let runtimes = props.runtimes.clone();
 
-    use_effect_with((scene.clone(), canvas_ref.clone(), iters.clone()), {
-        let accuracies = accuracies.clone();
-        let runtimes = runtimes.clone();
-        move |(scene, canvas_ref, iters): &(UseReducerHandle<Scene>, NodeRef, UseStateHandle<f64>)| {
+    // render
+    use_effect_with((scene.clone(), canvas_ref.clone()), {
+        move |(scene, canvas_ref): &(UseReducerHandle<Scene>, NodeRef)| {
             if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                 let ctx = canvas
                     .get_context("2d")
@@ -139,7 +140,11 @@ pub fn sandbox(props: &Props) -> Html {
                     .dyn_into::<CanvasRenderingContext2d>()
                     .unwrap();
                 ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
-                for (_, entity) in scene.entities.iter() {
+                // render targets last, so they do not get hidden behind beams
+                for (_, entity) in scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Observer { .. })) {
+                    entity.render(&ctx, scene);
+                }
+                for (_, entity) in scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target { .. })) {
                     entity.render(&ctx, scene);
                 }
 
@@ -154,24 +159,51 @@ pub fn sandbox(props: &Props) -> Html {
                     ctx.stroke_rect(x, y, w, h);
                 }
             }
+        }
+    });
 
-            let targets: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Target)).cloned().collect();
-            let observers: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Observer { std: _ })).cloned().collect();
+    let sim_key: Vec<(usize, i64, i64, u64)> = {
+        let mut v: Vec<_> = scene.entities.values().map(|e| {
+            let kind_bits = match e.kind {
+                Kind::Target { .. } => 0u64,
+                Kind::Observer { std } => std.to_bits(),
+            };
+            (e.id, e.position.x as i64, e.position.y as i64, kind_bits)
+        }).collect();
+        v.sort_by_key(|(id, ..)| *id);
+        v
+    };
+
+    // simulate
+    use_effect_with((sim_key, iters.clone()), {
+        let accuracies = accuracies.clone();
+        let runtimes = runtimes.clone();
+        let scene = scene.clone();
+        move |(_, iters): &(Vec<(usize, i64, i64, u64)>, UseStateHandle<f64>)| {
+            let targets: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Target { .. })).cloned().collect();
+            let observers: Vec<Entity> = scene.entities.values().filter(|e| matches!(e.kind, Kind::Observer { .. })).cloned().collect();
 
             if !targets.is_empty() && !observers.is_empty() {
-                let (acc, rt) = monte_carlo(&observers, &targets, **iters as usize);
+                let (acc, rt, per_target_accuracy) = monte_carlo(&observers, &targets, **iters as usize);
                 let mut new_accuracies = (*accuracies).clone();
                 let mut new_runtimes = (*runtimes).clone();
                 new_accuracies.push(acc);
                 new_runtimes.push(rt);
-                if new_accuracies.len() > 50 {
-                    new_accuracies.remove(0);
-                }
-                if new_runtimes.len() > 50 {
-                    new_runtimes.remove(0);
-                }
+                if new_accuracies.len() > 50 { new_accuracies.remove(0); }
+                if new_runtimes.len() > 50 { new_runtimes.remove(0); }
                 accuracies.set(new_accuracies);
                 runtimes.set(new_runtimes);
+                let mut entities = scene.entities.clone();
+                for (id, e) in scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target { .. })) {
+                    if let Some(&target_acc) = per_target_accuracy.get(&e.id) {
+                        let mut updated = e.clone();
+                        if let Kind::Target { ref mut accuracy, .. } = updated.kind {
+                            *accuracy = target_acc;
+                        }
+                        entities.insert(*id, updated);
+                    }
+                }
+                scene.dispatch(SceneAction::SetEntities(entities));
             }
         }
     });
@@ -238,6 +270,7 @@ pub fn sandbox(props: &Props) -> Html {
                 }
 
                 let mut touched_id = None;
+                // TODO: lots of repetition..
                 for (id, entity) in scene.entities.iter() {
                     if (canvas_pos.x - entity.position.x).abs() < OBJECT_SIZE / 2.0 && (canvas_pos.y - entity.position.y).abs() < OBJECT_SIZE / 2.0 {
                         touched_id = Some(*id);

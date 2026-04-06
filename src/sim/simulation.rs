@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::time::Duration;
 use rand::distr::Distribution;
 use rand::prelude::SliceRandom;
@@ -13,6 +14,8 @@ pub struct Simulation {
 }
 
 pub struct SimulationResult {
+    pub actual: Vec<usize>,
+    pub assignment: Vec<usize>,
     pub correct: usize,
     pub runtime: Duration
 }
@@ -45,6 +48,8 @@ impl Simulation {
             .count();
 
         Some(SimulationResult {
+            actual: expected,
+            assignment: solution.assignment,
             correct,
             runtime: solution.runtime
         })
@@ -62,7 +67,7 @@ impl Simulation {
             self.targets.iter().map(|target| {
                 let std = match &observer.kind {
                     Kind::Observer { std } => *std,
-                    Kind::Target => panic!("Observer was a target"),
+                    Kind::Target { .. } => panic!("Observer was a target"),
                 };
                 let pred = Self::predicted_bearing(observer, target);
                 let noise = Normal::new(0.0, std.to_radians()).unwrap().sample(&mut rng());
@@ -78,7 +83,7 @@ impl Simulation {
         for (s_idx, observer) in self.observers.iter().enumerate() {
             let std = match &observer.kind {
                 Kind::Observer { std } => *std,
-                Kind::Target => panic!("Observer was a target"),
+                Kind::Target { .. } => panic!("Observer was a target"),
             };
             for i in 0..n {
                 for j in 0..n {
@@ -97,10 +102,11 @@ impl Simulation {
     }
 }
 
-pub fn monte_carlo(observers: &[Entity], targets: &[Entity], n_trials: usize) -> (f64, f64) {
+pub fn monte_carlo(observers: &[Entity], targets: &[Entity], n_trials: usize) -> (f64, f64, HashMap<usize, f64>) {
     let n_targets = targets.len();
     let simulation = Simulation { observers: observers.to_vec(), targets: targets.to_vec() };
 
+    let mut per_target = HashMap::new();
     let mut correct_sum: usize = 0;
     let mut runtime_sum_us: u128 = 0;
     let mut completed: usize = 0;
@@ -111,13 +117,28 @@ pub fn monte_carlo(observers: &[Entity], targets: &[Entity], n_trials: usize) ->
             correct_sum += run.correct;
             runtime_sum_us += run.runtime.as_micros();
             completed += 1;
+
+            for (assigned, actual) in run.assignment.iter().zip(run.actual.iter()) {
+                let target_id = targets[*actual].id;
+                let entry = per_target.entry(target_id).or_insert((0, 0));
+                entry.1 += 1;
+                if assigned == actual {
+                    entry.0 += 1;
+                }
+            }
         }
     }
 
+    let per_target_accuracy = per_target
+        .into_iter()
+        .map(|(id, (correct, total))| (id, correct as f64 / total as f64))
+        .collect();
+
+
     if completed == 0 {
-        (0.0, 0.0)
+        (0.0, 0.0, per_target_accuracy)
     } else {
-        (correct_sum as f64 / (n_trials * n_targets) as f64, runtime_sum_us as f64 / completed as f64)
+        (correct_sum as f64 / (n_trials * n_targets) as f64, runtime_sum_us as f64 / completed as f64, per_target_accuracy)
     }
 }
 

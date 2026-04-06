@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::rc::Rc;
+use rand_distr::num_traits::Pow;
 use web_sys::js_sys::Math::atan2;
 use web_sys::{CanvasRenderingContext2d};
 use yew::Reducible;
@@ -12,9 +13,11 @@ pub struct Position {
 
 #[derive(Clone, PartialEq)]
 pub enum Kind {
-    Target,
+    Target {
+        accuracy: f64,
+    },
     Observer {
-        std: f64
+        std: f64,
     }
 }
 
@@ -45,9 +48,15 @@ impl Renderable for Entity {
         }
 
         match &self.kind {
-            Kind::Target => {
+            Kind::Target { accuracy }=> {
                 // TODO: add colours to a config or css
-                let color = if touched { "red" } else { TARGET_COLOR };
+                let color = if touched {
+                    "red"
+                } else {
+                    let c = accuracy.pow(5);
+                    let v = c * 255.0;
+                    &format!("rgb({v}, {v}, {v})")
+                };
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
             }
@@ -57,7 +66,7 @@ impl Renderable for Entity {
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
 
-                let targets = scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target));
+                let targets = scene.entities.iter().filter(|(_, e)| matches!(e.kind, Kind::Target { .. }));
                 for (_, t) in targets {
                     let dx = t.position.x - self.position.x;
                     let dy = t.position.y - self.position.y;
@@ -108,6 +117,7 @@ pub enum SceneAction {
     StartSelectionBox(Position),
     UpdateSelectionBox(Position),
     EndSelectionBox,
+    SetEntities(HashMap<usize, Entity>),
 }
 
 fn in_selection(pos: Position, a: Position, b: Position) -> bool {
@@ -197,6 +207,10 @@ impl Reducible for Scene {
             },
             SceneAction::EndSelectionBox => Rc::new(Scene {
                 selection_box: None,
+                ..(*self).clone()
+            }),
+            SceneAction::SetEntities(entities) => Rc::new(Scene {
+                entities,
                 ..(*self).clone()
             })
         }
