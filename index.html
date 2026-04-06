@@ -1,23 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8"/>
+<!DOCTYPE html><html lang="en"><head>
+        <meta charset="UTF-8">
         <title>BAss</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
 
-        <link rel="stylesheet" href="/bass/styles-283b86d832b397a6.css" integrity="sha384-z0aVPEK44MNN3Y93rJ9O1DgyNnxyhN+e6Qstmlhfre+V385LCbV0XYDaUVavkXUY"/>
-        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg" integrity="sha384-SfyKRoaA7u4b5Z0QUTlpaImkVNlpnX5iVJX8P+KAxzvixya/CFGcI0aHQps59Ozx"/>
-    <link rel="modulepreload" href="/bass/bass-8becf399fe10ba36.js" crossorigin="anonymous" integrity="sha384-l0iDJq3BbfYONF/E9KSz2l9CGy6ERbo3WnG9HBFeDK9q5W5ElcJZomSicyTiLoMR"><link rel="preload" href="/bass/bass-8becf399fe10ba36_bg.wasm" crossorigin="anonymous" integrity="sha384-E8mjSD2wpOF8oKSSyNqNqW/zIDtCftrYZ+wahDwY7OrkicdzUw1kC8UGWfDxKBcI" as="fetch" type="application/wasm"></head>
+        <link rel="stylesheet" href="/bass/styles-ca58aa4a392f9cf1.css">
+        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg">
+    
+<link rel="preload" href="/bass/bass-ee3b5b87be63b82_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/bass/bass-ee3b5b87be63b82.js"></head>
     <body>
-<script type="module">
-import init, * as bindings from '/bass/bass-8becf399fe10ba36.js';
-const wasm = await init({ module_or_path: '/bass/bass-8becf399fe10ba36_bg.wasm' });
-
-
-window.wasmBindings = bindings;
-
-
-dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
-
-</script></body>
-</html>
+<script type="module">import init from '/bass/bass-ee3b5b87be63b82.js';init('/bass/bass-ee3b5b87be63b82_bg.wasm');</script></body></html>

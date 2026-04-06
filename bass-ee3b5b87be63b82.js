@@ -246,6 +246,9 @@ function __wbg_get_imports() {
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
+        __wbg_newPlot_fc12627f1ed8ddb6: function(arg0, arg1, arg2) {
+            Plotly.newPlot(getStringFromWasm0(arg0, arg1), arg2);
+        },
         __wbg_new_227d7c05414eb861: function() {
             const ret = new Error();
             return ret;
@@ -281,6 +284,10 @@ function __wbg_get_imports() {
             const ret = arg0.parentNode;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
+        __wbg_parse_545d11396395fbbd: function() { return handleError(function (arg0, arg1) {
+            const ret = JSON.parse(getStringFromWasm0(arg0, arg1));
+            return ret;
+        }, arguments); },
         __wbg_performance_3fcf6e32a7e1ed0a: function(arg0) {
             const ret = arg0.performance;
             return ret;
@@ -442,18 +449,18 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_cast_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 488, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 1015, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__ha97b474af06e9d2e);
             return ret;
         },
         __wbindgen_cast_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Ref(NamedExternref("Event"))], shim_idx: 436, ret: Unit, inner_ret: Some(Unit) }, mutable: false }) -> Externref`.
-            const ret = makeClosure(arg0, arg1, wasm_bindgen__convert__closures________invoke__hee831b08a12044bc);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Ref(NamedExternref("Event"))], shim_idx: 954, ret: Unit, inner_ret: Some(Unit) }, mutable: false }) -> Externref`.
+            const ret = makeClosure(arg0, arg1, wasm_bindgen__convert__closures________invoke__h4440dc0f9296e0bf);
             return ret;
         },
         __wbindgen_cast_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 473, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__hab601aee22b272d6);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 990, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h7f01a61dae9bebbe);
             return ret;
         },
         __wbindgen_cast_0000000000000004: function(arg0, arg1) {
@@ -473,16 +480,16 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./bass_bg.js": import0,
+        "./bass-ee3b5b87be63b82_bg.js": import0,
     };
 }
 
-function wasm_bindgen__convert__closures_____invoke__hab601aee22b272d6(arg0, arg1) {
-    wasm.wasm_bindgen__convert__closures_____invoke__hab601aee22b272d6(arg0, arg1);
+function wasm_bindgen__convert__closures_____invoke__h7f01a61dae9bebbe(arg0, arg1) {
+    wasm.wasm_bindgen__convert__closures_____invoke__h7f01a61dae9bebbe(arg0, arg1);
 }
 
-function wasm_bindgen__convert__closures________invoke__hee831b08a12044bc(arg0, arg1, arg2) {
-    wasm.wasm_bindgen__convert__closures________invoke__hee831b08a12044bc(arg0, arg1, arg2);
+function wasm_bindgen__convert__closures________invoke__h4440dc0f9296e0bf(arg0, arg1, arg2) {
+    wasm.wasm_bindgen__convert__closures________invoke__h4440dc0f9296e0bf(arg0, arg1, arg2);
 }
 
 function wasm_bindgen__convert__closures_____invoke__ha97b474af06e9d2e(arg0, arg1, arg2) {
@@ -830,7 +837,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('bass_bg.wasm', import.meta.url);
+        module_or_path = new URL('bass-ee3b5b87be63b82_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 
