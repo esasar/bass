@@ -55,8 +55,9 @@ html, body {
     display: flex;
     width: 100%;
     flex-direction: column;
-    padding: 0;
+    padding: 8px;
     margin: 0;
+    box-sizing: border-box;
 }
 
 .slider input {
@@ -74,20 +75,17 @@ main {
     flex-direction: row;
     width: 100%;
     height: calc(100% - var(--header-height) - var(--footer-height));
+    padding-bottom: var(--footer-height);
+    box-sizing: border-box;
 }
 
-section {
-    flex: 1;
+section, aside {
+    flex: 1 1 50%;
     display: flex;
     justify-content: center;
     padding: 16px;
-}
-
-aside {
-    flex: 1;
-    justify-content: center;
-    align-items: center;
-    font-size: 5rem;
+    overflow: auto;
+    box-sizing: border-box;
 }
 
 header, footer {
@@ -104,13 +102,17 @@ header h1 {
     margin: 0;
 }
 
-.canvas-wrapper {
+.canvas-wrapper, .chart-wrapper {
     background-color: var(--surface-color);
     overflow: hidden;
     display: flex;
-    padding: 8px;
     border-radius: 8px;
     width: 100%;
+}
+
+.chart {
+    width: 100%;
+    aspect-ratio: 4 / 3;
 }
 
 canvas {
@@ -120,6 +122,7 @@ canvas {
     display: block;
     background-color: var(--surface-color);
     overflow: hidden;
+    touch-action: none;
 }
 
 footer {
@@ -152,7 +155,6 @@ footer span {
     gap: 8px;
     background-color: var(--surface-color);
     border-radius: 8px;
-    padding: 8px;
 }
 
 @media (max-width: 768px) {
@@ -163,4 +165,21 @@ footer span {
 
 input[type="range"] {
     accent-color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    html, body {
+        overflow: auto;
+    }
+
+    main {
+        flex-direction: column;
+        height: auto;
+        padding-bottom: var(--footer-height);
+    }
+
+    section, aside {
+        flex: 1 1 50%;
+        overflow: auto;
+    }
 }

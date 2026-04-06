@@ -2,7 +2,7 @@ mod components;
 mod sim;
 
 use yew::{function_component, html, use_state, Html};
-use crate::components::{Footer, Header, Sandbox};
+use crate::components::{Chart, Footer, Header, Sandbox};
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -17,7 +17,7 @@ pub fn app() -> Html {
                     <Sandbox accuracies={accuracies.clone()} runtimes={runtimes.clone()}/>
                 </section>
                 <aside>
-                    
+                    <Chart y_data={(*accuracies).clone()}/>
                 </aside>
             </main>
             <Footer
