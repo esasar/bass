@@ -480,7 +480,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./bass-ee3b5b87be63b82_bg.js": import0,
+        "./bass_bg.js": import0,
     };
 }
 
@@ -837,7 +837,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('bass-ee3b5b87be63b82_bg.wasm', import.meta.url);
+        module_or_path = new URL('bass_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

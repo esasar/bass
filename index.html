@@ -1,13 +1,24 @@
-<!DOCTYPE html><html lang="en"><head>
-        <meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
         <title>BAss</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
 
-        <link rel="stylesheet" href="/bass/styles-ca58aa4a392f9cf1.css">
-        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg">
-    
-<link rel="preload" href="/bass/bass-ee3b5b87be63b82_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/bass/bass-ee3b5b87be63b82.js"></head>
+        <link rel="stylesheet" href="/bass/styles-ca58aa4a392f9cf1.css" integrity="sha384-qKftyh0RhthxIS8ZBkef7/gDSjCk4k85V2Gei/GUVvAwu/It84egr6cpFEwy7f5l"/>
+        <link rel="icon" href="/bass/favicon-618ea7ca28f8dd75.svg" integrity="sha384-SfyKRoaA7u4b5Z0QUTlpaImkVNlpnX5iVJX8P+KAxzvixya/CFGcI0aHQps59Ozx"/>
+    <link rel="modulepreload" href="/bass/bass-5381ad0823f30f26.js" crossorigin="anonymous" integrity="sha384-xL2mYmW6wT1dM9xfkQxZF+kfbAgu4XQ9ARc0n/TldpZzs8KiLolze4441xDzjq0q"><link rel="preload" href="/bass/bass-5381ad0823f30f26_bg.wasm" crossorigin="anonymous" integrity="sha384-KxZQC+qB54/3n6qpTBblJ+3QLhA4qMEhQ5Z29rHTXg3i7M1I1nCoZclUpeXh73U2" as="fetch" type="application/wasm"></head>
     <body>
-<script type="module">import init from '/bass/bass-ee3b5b87be63b82.js';init('/bass/bass-ee3b5b87be63b82_bg.wasm');</script></body></html>
+<script type="module">
+import init, * as bindings from '/bass/bass-5381ad0823f30f26.js';
+const wasm = await init({ module_or_path: '/bass/bass-5381ad0823f30f26_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
