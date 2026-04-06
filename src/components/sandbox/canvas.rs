@@ -190,7 +190,11 @@ pub fn sandbox(props: &Props) -> Html {
     let on_mouse_move = {
         let scene = scene.clone();
         let canvas_ref = canvas_ref.clone();
+        let context_menu_pos = context_menu_pos.clone();
         Callback::from(move |e: MouseEvent| {
+            if let Some(pos) = *context_menu_pos {
+                return;
+            }
             if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                 let canvas_pos = client_to_canvas(&canvas, &Position { x: e.client_x() as f64, y: e.client_y() as f64 });
                 if let Some(id) = scene.selected {
