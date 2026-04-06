@@ -100,6 +100,7 @@ pub enum SceneAction {
     Touch(Option<usize>),
     Select(Option<usize>),
     Move(usize, Position),
+    AdjustStd(usize, f64),
 }
 
 impl Reducible for Scene {
@@ -133,6 +134,18 @@ impl Reducible for Scene {
                 let mut entities = self.entities.clone();
                 if let Some(entity) = entities.get_mut(&id) {
                     entity.position = pos;
+                }
+                Rc::new(Scene {
+                    entities,
+                    ..(*self).clone()
+                })
+            }
+            SceneAction::AdjustStd(id, new_std) => {
+                let mut entities = self.entities.clone();
+                if let Some(entity) = entities.get_mut(&id) {
+                    if let Kind::Observer { ref mut std } = entity.kind {
+                        *std = new_std;
+                    }
                 }
                 Rc::new(Scene {
                     entities,

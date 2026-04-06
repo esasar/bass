@@ -28,6 +28,8 @@ fn client_to_canvas(canvas: &HtmlCanvasElement, client_pos: &Position) -> Positi
 
 #[function_component(Sandbox)]
 pub fn sandbox(props: &Props) -> Html {
+    let scene = use_reducer(Scene::default);
+
     let std = use_state(|| 1.0f64);
     let on_std_change = Callback::from({
         let std = std.clone();
@@ -52,7 +54,6 @@ pub fn sandbox(props: &Props) -> Html {
         })
     };
 
-    let scene = use_reducer(Scene::default);
     // TODO: running id -> something else?
     let id = use_state(|| 0usize);
 
@@ -192,7 +193,7 @@ pub fn sandbox(props: &Props) -> Html {
         let canvas_ref = canvas_ref.clone();
         let context_menu_pos = context_menu_pos.clone();
         Callback::from(move |e: MouseEvent| {
-            if let Some(pos) = *context_menu_pos {
+            if let Some(_) = *context_menu_pos {
                 return;
             }
             if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
@@ -263,6 +264,20 @@ pub fn sandbox(props: &Props) -> Html {
         })
     };
 
+    // TODO: maybe have a 'persistent' selection when not dragging
+    //  and adjust std for selected instead of a context menu item
+    let on_adjust_std =  {
+        let scene = scene.clone();
+        let std = std.clone();
+        let context_menu_pos = context_menu_pos.clone();
+        Callback::from(move |_: MouseEvent| {
+            if let Some(id) = scene.touched {
+                scene.dispatch(SceneAction::AdjustStd(id, *std));
+            }
+            context_menu_pos.set(None);
+        })
+    };
+
     html! {
         <div class="sandbox">
             <Controls
@@ -288,6 +303,7 @@ pub fn sandbox(props: &Props) -> Html {
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
                     if let Some(_) = scene.touched {
+                        <ContextMenuItem label={"Adjust std"} on_click={on_adjust_std}/>
                         <ContextMenuItem label={"Remove target"} on_click={on_remove_target}/>
                     } else {
                         <ContextMenuItem label={"Add target"} on_click={on_add_target}/>
