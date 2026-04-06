@@ -36,6 +36,15 @@ pub fn sandbox(props: &Props) -> Html {
         move |val: f64| std.set(val)
     });
 
+    use_effect_with(*std, {
+        let scene = scene.clone();
+        move |std: &f64| {
+            if let Some(id) = scene.selected {
+                scene.dispatch(SceneAction::AdjustStd(id, *std));
+            }
+        }
+    });
+
     // TODO: iterations f64 -> i64
     let iters = use_state(|| 10.0f64);
     let on_iters_change = Callback::from({
@@ -161,7 +170,10 @@ pub fn sandbox(props: &Props) -> Html {
         let context_menu_pos = context_menu_pos.clone();
         Callback::from(move |_: MouseEvent| {
             if let Some(id) = scene.touched {
+                scene.dispatch(SceneAction::StartDrag(id));
                 scene.dispatch(SceneAction::Select(Some(id)));
+            } else {
+                scene.dispatch(SceneAction::Select(None));
             }
             context_menu_pos.set(None);
         })
@@ -198,7 +210,7 @@ pub fn sandbox(props: &Props) -> Html {
             }
             if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                 let canvas_pos = client_to_canvas(&canvas, &Position { x: e.client_x() as f64, y: e.client_y() as f64 });
-                if let Some(id) = scene.selected {
+                if let Some(id) = scene.dragging {
                     scene.dispatch(SceneAction::Move(id, canvas_pos));
                     return;
                 }
@@ -242,7 +254,7 @@ pub fn sandbox(props: &Props) -> Html {
     let on_mouse_up = {
         let scene = scene.clone();
         Callback::from(move |_: MouseEvent| {
-            scene.dispatch(SceneAction::Select(None));
+            scene.dispatch(SceneAction::EndDrag);
         })
     };
 
@@ -259,20 +271,6 @@ pub fn sandbox(props: &Props) -> Html {
         Callback::from(move |_: MouseEvent| {
             if let Some(id) = scene.touched {
                 scene.dispatch(SceneAction::Remove(id));
-            }
-            context_menu_pos.set(None);
-        })
-    };
-
-    // TODO: maybe have a 'persistent' selection when not dragging
-    //  and adjust std for selected instead of a context menu item
-    let on_adjust_std =  {
-        let scene = scene.clone();
-        let std = std.clone();
-        let context_menu_pos = context_menu_pos.clone();
-        Callback::from(move |_: MouseEvent| {
-            if let Some(id) = scene.touched {
-                scene.dispatch(SceneAction::AdjustStd(id, *std));
             }
             context_menu_pos.set(None);
         })
@@ -303,7 +301,6 @@ pub fn sandbox(props: &Props) -> Html {
             if let Some(pos) = *context_menu_pos {
                 <ContextMenu pos={pos}>
                     if let Some(_) = scene.touched {
-                        <ContextMenuItem label={"Adjust std"} on_click={on_adjust_std}/>
                         <ContextMenuItem label={"Remove target"} on_click={on_remove_target}/>
                     } else {
                         <ContextMenuItem label={"Add target"} on_click={on_add_target}/>

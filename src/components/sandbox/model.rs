@@ -91,6 +91,7 @@ pub struct Scene {
     pub entities: HashMap<usize, Entity>,
     pub touched: Option<usize>,
     pub selected: Option<usize>,
+    pub dragging: Option<usize>,
 }
 
 pub enum SceneAction {
@@ -101,6 +102,8 @@ pub enum SceneAction {
     Select(Option<usize>),
     Move(usize, Position),
     AdjustStd(usize, f64),
+    StartDrag(usize),
+    EndDrag,
 }
 
 impl Reducible for Scene {
@@ -152,6 +155,14 @@ impl Reducible for Scene {
                     ..(*self).clone()
                 })
             }
+            SceneAction::StartDrag(id) => Rc::new(Scene {
+                dragging: Some(id),
+                ..(*self).clone()
+            }),
+            SceneAction::EndDrag => Rc::new(Scene {
+                dragging: None,
+                ..(*self).clone()
+            }),
         }
     }
 }
